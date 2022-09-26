@@ -11,14 +11,17 @@ namespace bymayo\pdftransform;
 use bymayo\pdftransform\services\PdfTransformService as PdfTransformServiceService;
 use bymayo\pdftransform\variables\PdfTransformVariable;
 use bymayo\pdftransform\models\Settings;
+use bymayo\pdftransform\gql\directives\PdfToImage;
 
 use Craft;
 use craft\base\Plugin;
+use craft\services\Gql;
 use craft\services\Plugins;
 use craft\services\Elements;
 use craft\events\PluginEvent;
 use craft\web\twig\variables\CraftVariable;
 
+use craft\events\RegisterGqlDirectivesEvent;
 use yii\base\Event;
 use yii\log\FileTarget;
 
@@ -65,6 +68,10 @@ class PdfTransform extends Plugin
         parent::init();
         self::$plugin = $this;
 
+        $this->setComponents([
+            'pdfTransformServices' => pdfTransformService::class,
+        ]);
+
         $fileTarget = new FileTarget(
             [
               'logFile' => Craft::getAlias('@storage/logs/pdfTransform.log'),
@@ -90,6 +97,14 @@ class PdfTransform extends Plugin
             function (PluginEvent $event) {
                 if ($event->plugin === $this) {
                 }
+            }
+        );
+
+        Event::on(
+            Gql::class,
+            Gql::EVENT_REGISTER_GQL_DIRECTIVES,
+            function(RegisterGqlDirectivesEvent $event) {
+                $event->directives[] = PdfToImage::class;
             }
         );
 
